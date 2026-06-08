@@ -9,12 +9,13 @@ on:
 jobs:
   automate:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Issue opened
         if: github.event_name == 'issues' && github.event.action == 'opened'
         run: |
           echo "Issue #${{ github.event.issue.number }} opened"
-          echo "Adding needs-triage label..."
           gh issue edit ${{ github.event.issue.number }} --add-label "needs-triage"
 
       - name: Issue closed
