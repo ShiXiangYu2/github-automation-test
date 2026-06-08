@@ -2,9 +2,9 @@ name: Automation
 
 on:
   issues:
-    types: [opened, labeled, closed]
+    types: [opened, closed]
   pull_request:
-    types: [opened, closed, synchronize]
+    types: [opened, closed]
   workflow_run:
     types: [completed]
 
@@ -12,35 +12,24 @@ jobs:
   automate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "GITHUB_TOKEN defined: ${#GH_TOKEN}"
-
-      # Issue 自动化
-      - name: Issue opened → add needs-triage
+      - name: Issue opened
         if: github.event_name == 'issues' && github.event.action == 'opened'
         run: |
-          echo "Issue #${{ github.event.issue.number }} opened by ${{ github.event.issue.user.login }}"
-          gh issue edit ${{ github.event.issue.number }} --add-label "needs-triage" || echo "Label update skipped"
+          echo "Issue #${{ github.event.issue.number }} opened"
+          echo "Adding needs-triage label..."
+          gh issue edit ${{ github.event.issue.number }} --add-label "needs-triage"
 
-      - name: Issue closed → log
+      - name: Issue closed
         if: github.event_name == 'issues' && github.event.action == 'closed'
         run: |
           echo "Issue #${{ github.event.issue.number }} closed"
 
-      # PR 自动化
-      - name: PR merged → close and cleanup
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+      - name: PR closed
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
         run: |
-          echo "PR #${{ github.event.pull_request.number }} merged by ${{ github.event.pull_request.user.login }}"
-          gh pr close ${{ github.event.pull_request.number }} --delete-branch || echo "PR close skipped"
+          echo "PR #${{ github.event.pull_request.number }} closed, merged: ${{ github.event.pull_request.merged }}"
 
-      # CI 结果自动化
-      - name: CI completed → log result
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.name != 'Automation'
+      - name: Workflow completed
+        if: github.event_name == 'workflow_run'
         run: |
-          echo "Workflow '${{ github.event.workflow_run.name }}' completed with conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow ${{ github.event.workflow_run.name }} completed with ${{ github.event.workflow_run.conclusion }}"
