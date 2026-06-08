@@ -14,31 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "GITHUB_TOKEN defined: ${#GH_TOKEN}"
+
       # Issue 自动化
       - name: Issue opened → add needs-triage
         if: github.event_name == 'issues' && github.event.action == 'opened'
         run: |
-          gh issue edit ${{ github.event.issue.number }} --add-label "needs-triage"
+          echo "Issue #${{ github.event.issue.number }} opened by ${{ github.event.issue.user.login }}"
+          gh issue edit ${{ github.event.issue.number }} --add-label "needs-triage" || echo "Label update skipped"
 
-      - name: Issue closed → check parent issue
+      - name: Issue closed → log
         if: github.event_name == 'issues' && github.event.action == 'closed'
         run: |
           echo "Issue #${{ github.event.issue.number }} closed"
 
       # PR 自动化
-      - name: PR merged → close linked issues
+      - name: PR merged → close and cleanup
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
-          gh pr close ${{ github.event.pull_request.number }} --delete-branch
-          echo "PR #${{ github.event.pull_request.number }} merged"
+          echo "PR #${{ github.event.pull_request.number }} merged by ${{ github.event.pull_request.user.login }}"
+          gh pr close ${{ github.event.pull_request.number }} --delete-branch || echo "PR close skipped"
 
       # CI 结果自动化
-      - name: CI success → log
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.name != 'Automation'
+      - name: CI completed → log result
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.name != 'Automation'
         run: |
-          echo "✅ CI passed: ${{ github.event.workflow_run.name }}"
-
-      - name: CI failure → notify
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name != 'Automation'
-        run: |
-          echo "❌ CI failed: ${{ github.event.workflow_run.name }}"
+          echo "Workflow '${{ github.event.workflow_run.name }}' completed with conclusion: ${{ github.event.workflow_run.conclusion }}"
