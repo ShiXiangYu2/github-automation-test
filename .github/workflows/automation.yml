@@ -5,8 +5,6 @@ on:
     types: [opened, closed]
   pull_request:
     types: [opened, closed]
-  workflow_run:
-    types: [completed]
 
 jobs:
   automate:
@@ -29,7 +27,7 @@ jobs:
         run: |
           echo "PR #${{ github.event.pull_request.number }} closed, merged: ${{ github.event.pull_request.merged }}"
 
-      - name: Workflow completed
-        if: github.event_name == 'workflow_run'
+      - name: PR opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
         run: |
-          echo "Workflow ${{ github.event.workflow_run.name }} completed with ${{ github.event.workflow_run.conclusion }}"
+          echo "PR #${{ github.event.pull_request.number }} opened"
