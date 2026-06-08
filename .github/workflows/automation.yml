@@ -12,6 +12,11 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Configure git
+        run: |
+          git config --global user.email "automation@github.com"
+          git config --global user.name "GitHub Automation"
+
       - name: Issue opened
         if: github.event_name == 'issues' && github.event.action == 'opened'
         run: |
