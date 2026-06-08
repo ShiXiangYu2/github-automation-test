@@ -12,6 +12,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Configure git
         run: |
           git config --global user.email "automation@github.com"
